@@ -2,38 +2,45 @@ pipeline {
     agent any
 
     stages {
-        stage('Clonar Código') {
+        stage('📥 Clonar Código') {
             steps {
-                echo '📥 Descargando los últimos cambios desde la rama main de Git...'
+                echo 'Descargando la última versión del repositorio...'
+                checkout scm
             }
         }
         
-        stage('Validar Sintaxis') {
+        stage('🧪 Pruebas en Contenedor') {
             steps {
-                echo '🔍 Verificando finales de línea con dos2unix...'
-                // En un servidor real esto asegura que no existan errores CRLF
+                echo 'Levantando contenedor dinámico de Python para correr Pytest...'
+                // Ejecutamos pytest dentro de un contenedor aislado con la app y el test actuales
+                sh '''
+                docker run --rm -v $(pwd):/app -w /app python:3.12-slim sh -c "
+                pip install --no-cache-dir pytest &&
+                pytest test_app.py
+                "
+                '''
             }
         }
-
-        stage('Construir Artefacto') {
+        
+        stage('📦 Empaquetar Artefacto') {
             steps {
-                echo '📦 Compilando imagen Docker: mi-chequeador-red:latest...'
-            }
-        }
-
-        stage('Pruebas de Conectividad') {
-            steps {
-                echo '🚀 Levantando contenedor de pruebas y ejecutando ping a la API...'
+                echo 'Empaquetando la aplicación para producción...'
+                // Comprimimos nuestra app en un archivo ejecutable zip
+                sh 'tar -czvf app_produccion.tar.gz app.py'
             }
         }
     }
     
     post {
         success {
-            echo '✅ ¡PIPELINE EXITOSO! El código es seguro y la infraestructura está en verde.'
+            echo '💾 Guardando el Artefacto en el servidor de Jenkins...'
+            // Jenkins almacena de forma permanente el archivo comprimido final
+            archiveArtifacts artifacts: 'app_produccion.tar.gz', followSymlinks: false
+            echo '✅ ¡PIPELINE EXITOSO!'
         }
         failure {
-            echo '❌ ¡ALERTA! El pipeline falló en alguna etapa. Revisar los logs inmediatamente.'
+            echo '❌ ¡PIPELINE FALLIDO! Las pruebas no pasaron.'
         }
     }
 }
+

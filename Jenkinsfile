@@ -1,13 +1,12 @@
 pipeline {
     agent any
 
-    stages {
-        stage('📥 Clonar Código') {
-            steps {
-                echo 'Descargando la última versión del repositorio...'
-                checkout scm
-            }
-        }
+    stage('📥 Clonar Código') {
+    steps {
+        echo '📥 Verificación Exitosa: ¡Este es el Pipeline Real de Septiembre de 2026! 🚀'
+        checkout scm
+    }
+}
         
         stage('🧪 Pruebas en Contenedor') {
             steps {
